@@ -1,0 +1,7 @@
+name: docker-publish
+on: [workflow_dispatch]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "build and push images"
