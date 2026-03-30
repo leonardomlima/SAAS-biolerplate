@@ -1,11 +1,30 @@
 name: ci-backend
-on: [push]
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/ci-backend.yml"
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
+        with:
+          python-version: "3.12"
       - run: pip install poetry
-      - run: cd backend && poetry install --no-root && poetry run pytest -v
+      - name: Install dependencies
+        run: poetry install --no-root
+      - name: Static validation
+        run: poetry run python -m compileall app
+      - name: Test
+        run: poetry run pytest -v --maxfail=1

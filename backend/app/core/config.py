@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     ASAAS_WEBHOOK_SECRET: str = ""
     ASAAS_ENVIRONMENT: str = "sandbox"
     BREVO_API_KEY: str = ""
+    BREVO_SENDER_EMAIL: str = "noreply@example.com"
+    BREVO_SENDER_NAME: str = "SaaS Boilerplate"
+    BREVO_TEMPLATE_WELCOME_ID: int = 0
+    BREVO_TEMPLATE_RESET_ID: int = 0
+    BREVO_TEMPLATE_INVITE_ID: int = 0
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
     ALLOWED_HOSTS: str = "localhost,127.0.0.1"
     PROJECT_NAME: str = "SaaS Boilerplate"
