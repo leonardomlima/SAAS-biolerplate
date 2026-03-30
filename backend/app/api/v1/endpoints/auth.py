@@ -2,11 +2,13 @@ from datetime import UTC, datetime, timedelta
 from secrets import token_urlsafe
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel.ext.asyncio.session import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.background.tasks import send_transactional_email_task
 from app.core.database import get_session
+from app.core.limiter import limiter
 from app.core.security import create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password
 from app.models.organization import Organization
 from app.models.user import User
@@ -20,19 +22,26 @@ from app.schemas.auth import (
     Token,
     VerifyEmailRequest,
 )
+from app.services.audit_service import write_audit_log
 
 router = APIRouter()
+FAILED_LOGINS: dict[str, tuple[int, datetime]] = {}
 
 
 @router.post("/login", response_model=Token)
-async def login(payload: LoginRequest, session: AsyncSession = Depends(get_session)) -> Token:
-    user = (
-        await session.exec(
-            select(User).where(User.email == payload.email, User.is_deleted.is_(False))
-        )
-    ).first()
+@limiter.limit("10/minute")
+async def login(request: Request, payload: LoginRequest, session: AsyncSession = Depends(get_session)) -> Token:
+    blocked = FAILED_LOGINS.get(payload.email)
+    if blocked and blocked[0] >= 5 and blocked[1] > datetime.now(UTC):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many failed attempts")
+
+    user = (await session.exec(select(User).where(User.email == payload.email, User.is_deleted.is_(False)))).first()
     if not user or not verify_password(payload.password, user.hashed_password):
+        count = (blocked[0] + 1) if blocked else 1
+        FAILED_LOGINS[payload.email] = (count, datetime.now(UTC) + timedelta(minutes=15))
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    FAILED_LOGINS.pop(payload.email, None)
 
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User inactive")
@@ -40,6 +49,15 @@ async def login(payload: LoginRequest, session: AsyncSession = Depends(get_sessi
     user.last_login_at = datetime.now(UTC)
     session.add(user)
     await session.commit()
+
+    await write_audit_log(
+        session,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.id,
+        action="auth.login",
+        entity_type="user",
+        entity_id=str(user.id),
+    )
 
     token_extra = {"tenant_id": str(user.tenant_id), "rtv": user.refresh_token_version}
     return Token(
@@ -49,7 +67,8 @@ async def login(payload: LoginRequest, session: AsyncSession = Depends(get_sessi
 
 
 @router.post("/register", response_model=Token)
-async def register(payload: RegisterRequest, session: AsyncSession = Depends(get_session)) -> Token:
+@limiter.limit("5/minute")
+async def register(request: Request, payload: RegisterRequest, session: AsyncSession = Depends(get_session)) -> Token:
     existing_user = (await session.exec(select(User).where(User.email == payload.email))).first()
     if existing_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
@@ -71,6 +90,22 @@ async def register(payload: RegisterRequest, session: AsyncSession = Depends(get
     await session.commit()
     await session.refresh(user)
 
+    send_transactional_email_task.delay(  # pyright: ignore[reportFunctionMemberAccess]
+        "welcome",
+        email=user.email,
+        tenant_id=str(user.tenant_id),
+        full_name=user.full_name,
+    )
+
+    await write_audit_log(
+        session,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.id,
+        action="auth.register",
+        entity_type="user",
+        entity_id=str(user.id),
+    )
+
     token_extra = {"tenant_id": str(user.tenant_id), "rtv": user.refresh_token_version}
     return Token(
         access_token=create_access_token(str(user.id), token_extra),
@@ -79,7 +114,8 @@ async def register(payload: RegisterRequest, session: AsyncSession = Depends(get
 
 
 @router.post("/refresh", response_model=Token)
-async def refresh(payload: RefreshRequest, session: AsyncSession = Depends(get_session)) -> Token:
+@limiter.limit("20/minute")
+async def refresh(request: Request, payload: RefreshRequest, session: AsyncSession = Depends(get_session)) -> Token:
     try:
         token_data = decode_token(payload.refresh_token)
     except ValueError as exc:
@@ -108,13 +144,28 @@ async def refresh(payload: RefreshRequest, session: AsyncSession = Depends(get_s
 
 
 @router.post("/reset-password", response_model=MessageResponse)
-async def reset_password(payload: ResetPasswordRequest, session: AsyncSession = Depends(get_session)) -> MessageResponse:
+@limiter.limit("5/minute")
+async def reset_password(request: Request, payload: ResetPasswordRequest, session: AsyncSession = Depends(get_session)) -> MessageResponse:
     user = (await session.exec(select(User).where(User.email == payload.email))).first()
     if user and user.is_active and not user.is_deleted:
         user.reset_password_token = token_urlsafe(32)
         user.reset_password_expires_at = datetime.now(UTC) + timedelta(hours=1)
         session.add(user)
         await session.commit()
+        send_transactional_email_task.delay(  # pyright: ignore[reportFunctionMemberAccess]
+            "reset",
+            email=user.email,
+            reset_token=user.reset_password_token,
+            tenant_id=str(user.tenant_id),
+        )
+        await write_audit_log(
+            session,
+            tenant_id=user.tenant_id,
+            actor_user_id=user.id,
+            action="auth.reset_password_requested",
+            entity_type="user",
+            entity_id=str(user.id),
+        )
 
     return MessageResponse(message="If the account exists, reset instructions were generated")
 
