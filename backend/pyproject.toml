@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "saas-boilerplate-backend"
+version = "0.1.0"
+description = "FastAPI SaaS boilerplate"
+authors = ["AI <ai@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.116.0"
+uvicorn = {extras=["standard"], version="^0.35.0"}
+sqlmodel = "^0.0.24"
+alembic = "^1.16.0"
+pydantic-settings = "^2.11.0"
+python-jose = {extras=["cryptography"], version="^3.5.0"}
+passlib = {extras=["bcrypt"], version="^1.7.4"}
+httpx = "^0.28.0"
+brevo-python = "^1.2.0"
+redis = "^6.0.0"
+celery = {extras=["redis"], version="^5.5.0"}
+structlog = "^25.4.0"
+python-multipart = "^0.0.20"
+slowapi = "^0.1.9"
+sentry-sdk = {extras=["fastapi"], version="^2.29.0"}
+opentelemetry-sdk = "^1.36.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.0"
+pytest-asyncio = "^1.0.0"
+pyright = "^1.1.403"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
