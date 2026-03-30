@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import api_router
 from app.core.cache import init_redis
+from app.core.database import init_db
 from app.core.config import settings
 from app.core.tenant import TenantMiddleware
 
@@ -23,4 +24,5 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.on_event("startup")
 async def startup_event() -> None:
+    await init_db()
     await init_redis()
