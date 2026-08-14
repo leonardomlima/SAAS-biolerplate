@@ -1,4 +1,4 @@
-# 🚀 SaaS Boilerplate Pro - Plataforma Completa com IA
+# SaaS Boilerplate Pro - Production-Ready Platform with AI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker)](https://www.docker.com/)
@@ -10,78 +10,78 @@
 [![CI/CD](https://github.com/yourorg/saas-boilerplate-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/yourorg/saas-boilerplate-pro/actions)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)](#)
 
-> **Boilerplate SaaS production-ready** com FastAPI + React, multi-tenant, billing integrado, emails transacionais e **módulo de IA com Chat, Agentes Especializados e Text2SQL**.
+**Production-ready SaaS boilerplate** built with FastAPI and React, featuring multi-tenancy, integrated billing, transactional emails, and an advanced AI module with Chat, Specialized Agents, and Text2SQL capabilities.
 
 ---
 
-## ✨ Destaques
+## Key Features
 
-### 🎯 Funcionalidades Core
-- ✅ **Multi-tenancy completo** - Isolamento de dados por organização
-- ✅ **Auth robusto** - JWT, refresh tokens, OAuth2, reset de senha, convites
-- ✅ **RBAC avançado** - Roles (owner, admin, member, viewer) com permissões granulares
-- ✅ **Billing integrado** - ASAAS para assinaturas e webhooks
-- ✅ **Emails transacionais** - Brevo para notificações e fluxos automatizados
-- ✅ **Auditoria completa** - Logs de eventos críticos para compliance
+### Core Functionality
+- **Complete Multi-tenancy** - Data isolation by organization
+- **Robust Authentication** - JWT, refresh tokens, OAuth2, password reset, invitations
+- **Advanced RBAC** - Roles (owner, admin, member, viewer) with granular permissions
+- **Integrated Billing** - ASAAS for subscriptions and webhooks
+- **Transactional Emails** - Brevo for notifications and automated flows
+- **Complete Audit Trail** - Critical event logging for compliance
 
-### 🤖 Módulo de IA (Novidade!)
-- ✅ **Chat com Agentes** - Conversas contextuais com histórico persistente
-- ✅ **Grupos de Modelos** - Reasoning, Creative, Coding, Fast, Balanced
-- ✅ **Temperature Inteligente** - Adaptação automática para modelos o1 (reasoning_effort)
-- ✅ **20+ Tools Integradas** - Search, SQL, Web, Code, Email, Automation
-- ✅ **Text2SQL Seguro** - Análise de dados em linguagem natural com isolamento tenant
-- ✅ **Contexto Redis** - Buffer de sessão ativo com LRU para controle de custos
-- ✅ **OpenRouter Centralizado** - Acesso a 100+ modelos com uma única API key
+### AI Module
+- **Chat with Agents** - Contextual conversations with persistent history
+- **Model Groups** - Reasoning, Creative, Coding, Fast, Balanced
+- **Intelligent Temperature** - Automatic adaptation for o1 models (reasoning_effort)
+- **20+ Integrated Tools** - Search, SQL, Web, Code, Email, Automation
+- **Secure Text2SQL** - Natural language data analysis with tenant isolation
+- **Redis Context** - Active session buffer with LRU for cost control
+- **OpenRouter Centralized** - Access to 100+ models with a single API key
 
-### 🛡️ Segurança & Qualidade
-- ✅ Rate limiting global e por endpoint crítico
-- ✅ Proteção anti brute-force com bloqueio progressivo
-- ✅ CORS refinado e headers de segurança (CSP, X-Frame, HSTS)
-- ✅ Validação rigorosa com Pydantic v2 e Zod
-- ✅ CI/CD completo (lint, type-check, tests, build)
-- ✅ Testes unitários (backend) + E2E (Playwright)
+### Security & Quality
+- Global and per-endpoint rate limiting
+- Anti brute-force protection with progressive blocking
+- Refined CORS and security headers (CSP, X-Frame, HSTS)
+- Rigorous validation with Pydantic v2 and Zod
+- Complete CI/CD (lint, type-check, tests, build)
+- Unit tests (backend) + E2E (Playwright)
 
 ---
 
-## 📦 Stack Tecnológico
+## Technology Stack
 
-| Área | Tecnologias |
+| Area | Technologies |
 |------|-------------|
 | **Backend** | Python 3.12+, FastAPI 0.116, SQLModel, SQLAlchemy 2.0 (Async), Alembic |
 | **Frontend** | React 19, TypeScript 5.9, Vite 6, Tailwind CSS 4, shadcn/ui, Radix UI |
 | **State** | Zustand (global), TanStack Query (server state), React Hook Form + Zod |
 | **Database** | PostgreSQL 16 (multi-tenant), Redis 7 (cache + sessions) |
 | **Task Queue** | Celery 5.5 + Redis Broker (emails, webhooks, background jobs) |
-| **IA/LLM** | OpenRouter (100+ modelos), LangChain patterns, Tool calling |
+| **AI/LLM** | OpenRouter (100+ models), LangChain patterns, Tool calling |
 | **Services** | ASAAS (billing), Brevo (email), Sentry (monitoring) |
 | **Infra** | Docker, Docker Compose, GitHub Actions, Ready for Render/Railway/Fly.io |
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
-### Pré-requisitos
+### Prerequisites
 ```bash
-# Docker e Docker Compose instalados
-# Node.js 20+ (para desenvolvimento frontend local)
-# Python 3.12+ (opcional, para desenvolvimento backend local)
+# Docker and Docker Compose installed
+# Node.js 20+ (for local frontend development)
+# Python 3.12+ (optional, for local backend development)
 ```
 
-### 1. Clone e Setup Inicial
+### 1. Clone and Initial Setup
 ```bash
 git clone https://github.com/yourorg/saas-boilerplate-pro.git
 cd saas-boilerplate-pro
 
-# Copie o arquivo de exemplo
+# Copy example file
 cp .env.example .env
 
-# Gere uma SECRET_KEY segura
+# Generate a secure SECRET_KEY
 openssl rand -hex 32
-# Cole no .env: SECRET_KEY=seu_valor_aqui
+# Paste to .env: SECRET_KEY=your_value_here
 ```
 
-### 2. Configure Variáveis de Ambiente
-Edite `.env` com suas credenciais:
+### 2. Configure Environment Variables
+Edit `.env` with your credentials:
 
 ```bash
 # Backend
@@ -89,7 +89,7 @@ SECRET_KEY=your_secret_key_here
 DATABASE_URL=postgresql://postgres:postgres@db:5432/saas_boilerplate
 REDIS_URL=redis://redis:6379/0
 
-# OpenRouter (obrigatório para funcionalidades de IA)
+# OpenRouter (required for AI features)
 OPENROUTER_API_KEY=sk_or_xxxxxxxxxxxxx
 
 # Billing (ASAAS)
@@ -105,67 +105,67 @@ FRONTEND_URL=http://localhost:5173
 BACKEND_URL=http://localhost:8000
 ```
 
-### 3. Suba os Serviços
+### 3. Start Services
 ```bash
-# Build e start de todos os serviços
+# Build and start all services
 docker-compose up -d --build
 
-# Aguarde ~30s para PostgreSQL e Redis estarem prontos
+# Wait ~30s for PostgreSQL and Redis to be ready
 ```
 
-### 4. Execute Migrations e Seed
+### 4. Run Migrations and Seed
 ```bash
-# Criar tabelas no banco
+# Create tables in database
 docker-compose exec backend alembic upgrade head
 
-# Popular com dados de exemplo (opcional)
+# Populate with sample data (optional)
 docker-compose exec backend python -m app.scripts.seed_data
 ```
 
-### 5. Acesse a Aplicação
+### 5. Access the Application
 ```
 Frontend: http://localhost:5173
 Backend API: http://localhost:8000
 API Docs (Swagger): http://localhost:8000/docs
 ```
 
-**Credenciais de teste (seed):**
+**Test credentials (seed):**
 - Email: `admin@example.com`
-- Senha: `password123`
+- Password: `password123`
 
 ---
 
-## 📚 Documentação
+## Documentation
 
-### Guias Principais
-| Documento | Descrição |
+### Main Guides
+| Document | Description |
 |-----------|-----------|
-| [GETTING_STARTED.md](./docs/GETTING_STARTED.md) | Guia passo-a-passo para primeiros passos |
-| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Visão geral da arquitetura e decisões técnicas |
-| [DEPLOYMENT.md](./docs/DEPLOYMENT.md) | Deploy em produção (Render, Railway, Fly.io) |
-| [CONTRIBUTING.md](./docs/CONTRIBUTING.md) | Como contribuir com o projeto |
-| [OPERATIONS.md](./docs/OPERATIONS.md) | Operações diárias, monitoring e troubleshooting |
+| [GETTING_STARTED.md](./docs/GETTING_STARTED.md) | Step-by-step guide for getting started |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Architecture overview and technical decisions |
+| [DEPLOYMENT.md](./docs/DEPLOYMENT.md) | Production deployment (Render, Railway, Fly.io) |
+| [CONTRIBUTING.md](./docs/CONTRIBUTING.md) | How to contribute to the project |
+| [OPERATIONS.md](./docs/OPERATIONS.md) | Daily operations, monitoring and troubleshooting |
 
-### Módulos Específicos
-| Documento | Descrição |
+### Specific Modules
+| Document | Description |
 |-----------|-----------|
-| [AI_MODULE.md](./docs/AI_MODULE.md) | Uso do módulo de IA, agentes e Text2SQL |
-| [BILLING_SETUP.md](./docs/BILLING_SETUP.md) | Configuração do ASAAS para billing |
-| [EMAIL_SETUP.md](./docs/EMAIL_SETUP.md) | Configuração do Brevo para emails |
+| [AI_MODULE.md](./docs/AI_MODULE.md) | Using the AI module, agents and Text2SQL |
+| [BILLING_SETUP.md](./docs/BILLING_SETUP.md) | ASAAS configuration for billing |
+| [EMAIL_SETUP.md](./docs/EMAIL_SETUP.md) | Brevo configuration for emails |
 
 ---
 
-## 🤖 Módulo de IA - Guia Rápido
+## AI Module - Quick Guide
 
-### Criando seu Primeiro Agente
+### Creating Your First Agent
 
 ```python
 from uuid import UUID
 from app.models.agent import AgentType, ModelProvider, ReasoningEffort
 
-# Agente de Chat Geral
+# General Chat Agent
 agent_chat = {
-    "name": "Assistente Geral",
+    "name": "General Assistant",
     "agent_type": AgentType.CHAT,
     "model_name": "openai/gpt-4o-mini",
     "model_group": "balanced",
@@ -173,9 +173,9 @@ agent_chat = {
     "enabled_tools": ["search_knowledge_base", "get_user_profile"],
 }
 
-# Agente de Raciocínio Complexo
+# Complex Reasoning Agent
 agent_reasoning = {
-    "name": "Analista de Dados",
+    "name": "Data Analyst",
     "agent_type": AgentType.TEXT2SQL,
     "model_name": "openai/o1-pro",
     "model_group": "reasoning",
@@ -185,7 +185,7 @@ agent_reasoning = {
     "read_only": True,
 }
 
-# Agente de Código
+# Coding Agent
 agent_coding = {
     "name": "Code Assistant",
     "agent_type": AgentType.CHAT,
@@ -196,73 +196,73 @@ agent_coding = {
 }
 ```
 
-### Tools Disponíveis (20+)
+### Available Tools (20+)
 
-#### Produtividade & Dados
-1. `search_knowledge_base` - Busca na base de conhecimento da organização
-2. `query_database_sql` - Executa queries SQL seguras (somente leitura)
-3. `get_user_profile` - Obtém perfil do usuário atual
-4. `list_organization_members` - Lista membros da organização
-5. `fetch_webhook_logs` - Busca logs de webhooks de billing
+#### Productivity & Data
+1. `search_knowledge_base` - Search organization knowledge base
+2. `query_database_sql` - Execute safe SQL queries (read-only)
+3. `get_user_profile` - Get current user profile
+4. `list_organization_members` - List organization members
+5. `fetch_webhook_logs` - Fetch billing webhook logs
 
-#### Web & Pesquisa
-6. `web_search` - Pesquisa na web via DuckDuckGo/SerpAPI
-7. `scrape_website` - Extrai conteúdo de URLs
-8. `check_competitor_pricing` - Monitora preços de concorrentes
-9. `translate_text` - Traduz entre 100+ idiomas
-10. `summarize_url` - Resume artigos e páginas web
+#### Web & Research
+6. `web_search` - Web search via DuckDuckGo/SerpAPI
+7. `scrape_website` - Extract content from URLs
+8. `check_competitor_pricing` - Monitor competitor pricing
+9. `translate_text` - Translate between 100+ languages
+10. `summarize_url` - Summarize articles and web pages
 
-#### Criação & Desenvolvimento
-11. `generate_code_snippet` - Gera código em múltiplas linguagens
-12. `debug_error_log` - Analisa logs de erro e sugere fixes
-13. `create_html_email` - Cria templates HTML para emails
-14. `generate_survey_questions` - Gera perguntas para pesquisas
-15. `seo_analyzer` - Analisa SEO de páginas web
+#### Creation & Development
+11. `generate_code_snippet` - Generate code in multiple languages
+12. `debug_error_log` - Analyze error logs and suggest fixes
+13. `create_html_email` - Create HTML email templates
+14. `generate_survey_questions` - Generate survey questions
+15. `seo_analyzer` - Analyze web page SEO
 
-#### Automação & Ação
-16. `send_email_draft` - Envia rascunho de email via Brevo
-17. `create_calendar_event` - Cria eventos no Google Calendar
-18. `calculate_financials` - Realiza cálculos financeiros complexos
-19. `generate_image_prompt` - Cria prompts para DALL-E/Midjourney
-20. `sentiment_analysis` - Analisa sentimento de textos
+#### Automation & Action
+16. `send_email_draft` - Send email drafts via Brevo
+17. `create_calendar_event` - Create Google Calendar events
+18. `calculate_financials` - Perform complex financial calculations
+19. `generate_image_prompt` - Create prompts for DALL-E/Midjourney
+20. `sentiment_analysis` - Analyze text sentiment
 
-### Exemplo: Análise de Dados com Text2SQL
+### Example: Data Analysis with Text2SQL
 
 ```python
 # POST /api/v1/ai/text2sql
 {
-    "question": "Qual o MRR total por plano nos últimos 3 meses?",
-    "agent_id": "uuid-do-agente-text2sql",
-    "session_id": "uuid-da-sessao-opcional"
+    "question": "What is the total MRR by plan in the last 3 months?",
+    "agent_id": "uuid-of-text2sql-agent",
+    "session_id": "optional-session-uuid"
 }
 
-# Resposta:
+# Response:
 {
-    "question": "Qual o MRR total por plano nos últimos 3 meses?",
+    "question": "What is the total MRR by plan in the last 3 months?",
     "sql_query": "SELECT p.name, SUM(s.amount) as mrr FROM subscriptions s JOIN plans p ON s.plan_id = p.id WHERE s.status = 'active' AND s.created_at >= NOW() - INTERVAL '3 months' AND s.tenant_id = 'xxx' GROUP BY p.name",
     "results": [
         {"name": "Basic", "mrr": 1500.00},
         {"name": "Pro", "mrr": 4500.00},
         {"name": "Enterprise", "mrr": 12000.00}
     ],
-    "explanation": "Query calcula MRR somando valores de assinaturas ativas dos últimos 3 meses, agrupadas por plano",
+    "explanation": "Query calculates MRR by summing active subscription values from the last 3 months, grouped by plan",
     "columns": ["name", "mrr"]
 }
 ```
 
-### Grupos de Modelos Recomendados
+### Recommended Model Groups
 
-| Grupo | Casos de Uso | Modelos Sugeridos | Temperature/Reasoning |
-|-------|--------------|-------------------|----------------------|
-| **Reasoning** | Análise complexa, matemática, planejamento | o1-pro, o1-mini, Claude 3.7 Thinking, DeepSeek R1 | reasoning_effort: high |
+| Group | Use Cases | Suggested Models | Temperature/Reasoning |
+|-------|-----------|------------------|----------------------|
+| **Reasoning** | Complex analysis, math, planning | o1-pro, o1-mini, Claude 3.7 Thinking, DeepSeek R1 | reasoning_effort: high |
 | **Creative** | Copywriting, marketing, brainstorming | GPT-4o, Claude 3.5 Sonnet, Gemini Pro 1.5 | temperature: 0.8 |
-| **Coding** | Programação, code review, debug | DeepSeek Coder V2, GPT-4 Turbo, Qwen 2.5 Coder | temperature: 0.2 |
-| **Fast** | Tarefas simples, alto volume, classificação | Llama 3 8B, Gemma 7B, Mistral 7B, GPT-3.5 Turbo | temperature: 0.5 |
-| **Balanced** | Chatbots gerais, uso diário | GPT-4o Mini, Claude 3 Haiku, Gemini Flash 1.5 | temperature: 0.7 |
+| **Coding** | Programming, code review, debug | DeepSeek Coder V2, GPT-4 Turbo, Qwen 2.5 Coder | temperature: 0.2 |
+| **Fast** | Simple tasks, high volume, classification | Llama 3 8B, Gemma 7B, Mistral 7B, GPT-3.5 Turbo | temperature: 0.5 |
+| **Balanced** | General chatbots, daily use | GPT-4o Mini, Claude 3 Haiku, Gemini Flash 1.5 | temperature: 0.7 |
 
 ---
 
-## 🏗️ Arquitetura
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -315,17 +315,17 @@ agent_coding = {
 
 ---
 
-## 🧪 Testes
+## Testing
 
 ### Backend (Pytest)
 ```bash
-# Rodar todos os testes
+# Run all tests
 docker-compose exec backend pytest
 
-# Com coverage
+# With coverage
 docker-compose exec backend pytest --cov=app --cov-report=html
 
-# Testes específicos
+# Specific tests
 docker-compose exec backend pytest tests/test_ai_module.py -v
 ```
 
@@ -337,103 +337,103 @@ cd frontend && npm run test
 # E2E tests
 cd frontend && npm run test:e2e
 
-# E2E com UI
+# E2E with UI
 cd frontend && npm run test:e2e -- --ui
 ```
 
 ### CI/CD
-O projeto inclui workflows automáticos no GitHub Actions:
+The project includes automated workflows in GitHub Actions:
 - **CI Backend**: Install → Type Check → Lint → Tests → Coverage
 - **CI Frontend**: Install → Type Check → Lint → Build
 - **E2E**: Spin up docker → Seed data → Run Playwright tests
 
 ---
 
-## 📊 Roadmap
+## Roadmap
 
-### ✅ Entregue (Fases 1-4 + IA)
-- [x] Setup completo do projeto
-- [x] Estrutura base multi-tenant
-- [x] Frontend production-ready (auth, orgs, billing)
-- [x] Segurança, qualidade e operação
-- [x] **Módulo de IA com Chat e Agentes**
-- [x] **Text2SQL para análise de dados**
-- [x] **20+ tools integradas**
-- [x] **Grupos de modelos especializados**
+### ✅ Delivered (Phases 1-4 + AI)
+- [x] Complete project setup
+- [x] Multi-tenant base structure
+- [x] Production-ready frontend (auth, orgs, billing)
+- [x] Security, quality and operations
+- [x] **AI Module with Chat and Agents**
+- [x] **Text2SQL for data analysis**
+- [x] **20+ integrated tools**
+- [x] **Specialized model groups**
 
-### 🚧 Em Desenvolvimento
-- [ ] Painel de formulários de pesquisa
-- [ ] Builder de HTML simplificado
-- [ ] Campanhas de email marketing
-- [ ] Dashboards de analytics de IA
+### 🚧 In Development
+- [ ] Survey form builder panel
+- [ ] Simplified HTML builder
+- [ ] Email marketing campaigns
+- [ ] AI analytics dashboards
 - [ ] Custom branding white-label
 
-### 📋 Planejado
-- [ ] Integração com mais provedores de LLM (Anthropic direto, Google Vertex)
-- [ ] Fine-tuning de modelos customizados
-- [ ] RAG (Retrieval Augmented Generation) com vector database
-- [ ] Marketplace de agents pré-configurados
-- [ ] Exportação de dados em múltiplos formatos
+### 📋 Planned
+- [ ] Integration with more LLM providers (Anthropic direct, Google Vertex)
+- [ ] Fine-tuning of custom models
+- [ ] RAG (Retrieval Augmented Generation) with vector database
+- [ ] Marketplace of pre-configured agents
+- [ ] Data export in multiple formats
 
 ---
 
-## 🤝 Contribuindo
+## Contributing
 
-Contribuições são bem-vindas! Veja nosso guia completo em [CONTRIBUTING.md](./docs/CONTRIBUTING.md).
+Contributions are welcome! See our complete guide at [CONTRIBUTING.md](./docs/CONTRIBUTING.md).
 
-### Passos Rápidos
+### Quick Steps
 ```bash
-# Fork o repositório
-git clone https://github.com/SEU_USER/saas-boilerplate-pro.git
+# Fork the repository
+git clone https://github.com/YOUR_USER/saas-boilerplate-pro.git
 
-# Crie uma branch para sua feature
-git checkout -b feature/minha-feature
+# Create a branch for your feature
+git checkout -b feature/my-feature
 
-# Faça commit das mudanças
-git commit -m 'feat: adiciona minha feature'
+# Commit changes
+git commit -m 'feat: add my feature'
 
-# Push e crite um PR
-git push origin feature/minha-feature
+# Push and create a PR
+git push origin feature/my-feature
 ```
 
-### Padrões do Projeto
-- **Commits**: Seguir [Conventional Commits](https://www.conventionalcommits.org/)
-- **Código**: Seguir lint configs (`.pre-commit-config.yaml`)
-- **Testes**: Cobertura mínima de 80% para novas features
-- **Docs**: Atualizar README e docs relevantes
+### Project Standards
+- **Commits**: Follow [Conventional Commits](https://www.conventionalcommits.org/)
+- **Code**: Follow lint configs (`.pre-commit-config.yaml`)
+- **Tests**: Minimum 80% coverage for new features
+- **Docs**: Update README and relevant docs
 
 ---
 
-## 📄 Licença
+## License
 
-Este projeto está sob a licença MIT. Veja [LICENSE](./LICENSE) para detalhes.
-
----
-
-## 🙏 Agradecimentos
-
-- [FastAPI](https://fastapi.tiangolo.com/) pelo framework incrível
-- [React](https://react.dev/) pela biblioteca que revolucionou o frontend
-- [shadcn/ui](https://ui.shadcn.com/) pelos componentes lindos e acessíveis
-- [OpenRouter](https://openrouter.ai/) pela centralização de modelos de IA
-- [ASAAS](https://asaas.com/) e [Brevo](https://brevo.com/) pelas integrações essenciais
+This project is under the MIT license. See [LICENSE](./LICENSE) for details.
 
 ---
 
-## 📞 Suporte & Comunidade
+## Acknowledgments
+
+- [FastAPI](https://fastapi.tiangolo.com/) for the amazing framework
+- [React](https://react.dev/) for the library that revolutionized frontend
+- [shadcn/ui](https://ui.shadcn.com/) for beautiful and accessible components
+- [OpenRouter](https://openrouter.ai/) for centralizing AI models
+- [ASAAS](https://asaas.com/) and [Brevo](https://brevo.com/) for essential integrations
+
+---
+
+## Support & Community
 
 - **Issues**: [GitHub Issues](https://github.com/yourorg/saas-boilerplate-pro/issues)
-- **Discord**: [Entre na comunidade](https://discord.gg/xxxxx)
+- **Discord**: [Join the community](https://discord.gg/xxxxx)
 - **Email**: support@saasboilerplate.pro
-- **Documentação**: [Docs completos](https://docs.saasboilerplate.pro)
+- **Documentation**: [Full docs](https://docs.saasboilerplate.pro)
 
 ---
 
 <div align="center">
 
-**Feito com ❤️ para acelerar seu próximo SaaS**
+**Built with care to accelerate your next SaaS**
 
-[⭐ Star no GitHub](https://github.com/yourorg/saas-boilerplate-pro) • [📖 Docs](https://docs.saasboilerplate.pro) • [💬 Discord](https://discord.gg/xxxxx)
+[Star on GitHub](https://github.com/yourorg/saas-boilerplate-pro) • [Docs](https://docs.saasboilerplate.pro) • [Discord](https://discord.gg/xxxxx)
 
 </div>
 
