@@ -1,3 +1,4 @@
+from .agent import Agent, ChatSession, Message, ToolDefinition
 from .asaas_customer import AsaasCustomer
 from .asaas_webhook_event import AsaasWebhookEvent
 from .audit_log import AuditLog
