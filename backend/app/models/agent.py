@@ -3,8 +3,9 @@ from uuid import UUID, uuid4
 from enum import Enum
 from typing import Optional, List
 
-from sqlmodel import Field, SQLModel, Relationship
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy.dialects.postgresql import JSONB, JSON
+from sqlalchemy import Text
 
 
 class ModelProvider(str, Enum):
@@ -52,10 +53,10 @@ class Agent(SQLModel, table=True):
     model_group: Optional[str] = Field(default=None, index=True)  # "reasoning", "creative", "coding", "fast"
     
     # Tools habilitadas (armazenado como JSONB)
-    enabled_tools: Optional[List[str]] = Field(default=None, sa_column=Field(sa_type=JSONB))
+    enabled_tools: Optional[list[str]] = Field(default=None, sa_type=JSONB)
     
     # Configurações específicas para Text2SQL
-    allowed_tables: Optional[List[str]] = Field(default=None, sa_column=Field(sa_type=JSONB))
+    allowed_tables: Optional[list[str]] = Field(default=None, sa_type=JSONB)
     read_only: bool = Field(default=True)
     
     is_active: bool = Field(default=True)
@@ -72,7 +73,7 @@ class ChatSession(SQLModel, table=True):
     user_id: UUID = Field(foreign_key="users.id", index=True)
     
     title: Optional[str] = Field(default=None, max_length=200)
-    metadata: dict = Field(default_factory=dict, sa_column=Field(sa_type=JSON))
+    metadata: dict = Field(default_factory=dict, sa_type=JSON)
     
     # Contexto da sessão no Redis (não persistido aqui)
     redis_key: Optional[str] = Field(default=None, max_length=200)
@@ -98,7 +99,7 @@ class Message(SQLModel, table=True):
     # Para mensagens de tool
     tool_call_id: Optional[str] = Field(default=None, max_length=100)
     tool_name: Optional[str] = Field(default=None, max_length=100)
-    tool_args: Optional[dict] = Field(default=None, sa_column=Field(sa_type=JSON))
+    tool_args: Optional[dict] = Field(default=None, sa_type=JSON)
     tool_result: Optional[str] = Field(default=None, sa_type=Text)
     
     # Metadados de raciocínio (para modelos com CoT)
@@ -127,14 +128,14 @@ class ToolDefinition(SQLModel, table=True):
     description: str = Field(sa_type=Text)
     
     # Schema da tool em JSON Schema format
-    parameters_schema: dict = Field(sa_column=Field(sa_type=JSON))
+    parameters_schema: dict = Field(sa_type=JSON)
     
     # Função Python que executa a tool (nome do método no ToolExecutor)
     handler_method: str = Field(max_length=100)
     
     # Categorias para organização
     category: str = Field(default="general", max_length=50)  # "productivity", "web", "data", "automation"
-    tags: List[str] = Field(default_factory=list, sa_column=Field(sa_type=JSON))
+    tags: Optional[list[str]] = Field(default_factory=list, sa_type=JSON)
     
     # Controle de acesso
     requires_auth: bool = Field(default=True)
