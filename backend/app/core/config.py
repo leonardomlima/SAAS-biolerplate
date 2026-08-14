@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = True
     SENTRY_DSN: str = ""
+    
+    # OpenRouter API Key para integração com múltiplos modelos de IA
+    OPENROUTER_API_KEY: str = ""
 
 
 settings = Settings()
