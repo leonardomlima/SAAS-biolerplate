@@ -20,7 +20,7 @@ async def list_organizations(
 ) -> list[OrganizationRead]:
     organizations = (
         await session.exec(
-            select(Organization).where(Organization.tenant_id == current_user.tenant_id, Organization.is_deleted.is_(False))
+            select(Organization).where(Organization.tenant_id == current_user.tenant_id, Organization.is_deleted == False)
         )
     ).all()
     return [OrganizationRead(id=org.id, name=org.name) for org in organizations]

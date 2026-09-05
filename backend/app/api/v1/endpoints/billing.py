@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -49,14 +49,17 @@ async def checkout(
     customer = await asaas_service.ensure_customer(session, organization, current_user)
     remote_subscription = await asaas_service.create_checkout(customer.asaas_customer_id, plan, str(organization.id))
 
+    now_utc = datetime.now(UTC)
+
     subscription = (
         await session.exec(
             select(Subscription).where(
                 Subscription.organization_id == organization.id,
-                Subscription.is_deleted.is_(False),
+                Subscription.is_deleted == False,
             )
         )
     ).first()
+
     if not subscription:
         subscription = Subscription(
             tenant_id=tenant_id,
@@ -68,6 +71,7 @@ async def checkout(
             asaas_subscription_id=remote_subscription["subscription_id"],
             status=remote_subscription["status"],
             next_due_date=AsaasService.parse_due_date(remote_subscription.get("next_due_date")),
+            last_synced_at=now_utc,
         )
     else:
         subscription.plan_id = plan["id"]
@@ -77,10 +81,11 @@ async def checkout(
         subscription.asaas_subscription_id = remote_subscription["subscription_id"]
         subscription.status = remote_subscription["status"]
         subscription.next_due_date = AsaasService.parse_due_date(remote_subscription.get("next_due_date"))
-        subscription.last_synced_at = datetime.now(UTC)
+        subscription.last_synced_at = now_utc
 
     session.add(subscription)
     await session.commit()
+    await session.refresh(subscription)
 
     await write_audit_log(
         session,
@@ -107,7 +112,7 @@ async def portal(
             select(Subscription).where(
                 Subscription.organization_id == current_user.organization_id,
                 Subscription.tenant_id == tenant_id,
-                Subscription.is_deleted.is_(False),
+                Subscription.is_deleted == False,
             )
         )
     ).first()
@@ -121,22 +126,55 @@ async def portal(
 
 @router.post("/webhook")
 async def webhook(
-    payload: AsaasWebhookPayload,
+    request: Request,
     session: AsyncSession = Depends(get_session),
     asaas_access_token: str | None = Header(default=None),
 ) -> dict:
-    if settings.ASAAS_WEBHOOK_SECRET and asaas_access_token != settings.ASAAS_WEBHOOK_SECRET:
+    """
+    Recebe eventos do Asaas via webhook.
+
+    Autenticação: o Asaas envia o token configurado no header `access_token`.
+    O campo `asaas_access_token` é mapeado automaticamente pelo FastAPI
+    a partir do header HTTP `asaas-access-token` (ou `access_token` via alias).
+
+    Para validar corretamente, lemos o header diretamente do request.
+    """
+    # Lê o token do header padrão do Asaas ("access_token")
+    raw_token = request.headers.get("access_token") or asaas_access_token
+
+    if settings.ASAAS_WEBHOOK_SECRET and raw_token != settings.ASAAS_WEBHOOK_SECRET:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook token")
 
-    raw_payload = payload.model_dump(mode="json")
-    external_reference = (raw_payload.get("subscription") or {}).get("externalReference")
-    organization = await session.get(Organization, external_reference) if external_reference else None
-    if not organization:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found for webhook")
+    # Parse manual do body — necessário para não depender da validação estrita do Pydantic
+    try:
+        body = await request.json()
+        payload = AsaasWebhookPayload(**body)
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Invalid payload: {exc}") from exc
 
+    raw_payload = payload.model_dump(mode="json")
+
+    # Tenta localizar a organização via externalReference
+    asaas_service = AsaasService()
+    external_reference = asaas_service._resolve_external_reference(raw_payload)
+    organization: Organization | None = None
+
+    if external_reference:
+        try:
+            from uuid import UUID
+
+            org_id = UUID(external_reference)
+            organization = await session.get(Organization, org_id)
+        except (ValueError, AttributeError):
+            organization = None
+
+    # Persiste o evento — mesmo que a organização não seja encontrada
+    # (para fins de auditoria / debug)
     event = AsaasWebhookEvent(
-        tenant_id=organization.tenant_id,
-        organization_id=organization.id,
+        # tenant_id vem da organização se disponível; caso contrário usamos um UUID nulo especial
+        # para não violar a constraint NOT NULL da BaseModel
+        tenant_id=organization.tenant_id if organization else _nil_uuid(),
+        organization_id=organization.id if organization else None,
         event=payload.event,
         external_id=payload.id,
         payload=raw_payload,
@@ -145,7 +183,11 @@ async def webhook(
     await session.commit()
     await session.refresh(event)
 
-    asaas_service = AsaasService()
+    # Se não encontrou organização, retorna OK sem processar mais
+    if not organization:
+        return {"ok": True, "event": payload.event, "subscription_synced": False, "warning": "Organization not found"}
+
+    # Sincroniza a subscription
     try:
         synced = await asaas_service.sync_subscription_from_webhook(session, raw_payload)
         event.processing_status = "processed"
@@ -184,7 +226,7 @@ async def subscription(
             select(Subscription).where(
                 Subscription.organization_id == current_user.organization_id,
                 Subscription.tenant_id == tenant_id,
-                Subscription.is_deleted.is_(False),
+                Subscription.is_deleted == False,
             )
         )
     ).first()
@@ -192,3 +234,13 @@ async def subscription(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscription not found")
 
     return SubscriptionRead.model_validate(subscription_row)
+
+
+# ---------------------------------------------------------------------------
+# Helper
+# ---------------------------------------------------------------------------
+
+def _nil_uuid():
+    """UUID de fallback para o tenant_id quando não há organização mapeada."""
+    from uuid import UUID
+    return UUID("00000000-0000-0000-0000-000000000000")

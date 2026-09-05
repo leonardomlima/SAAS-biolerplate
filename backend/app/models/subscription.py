@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlmodel import Field
 
-from app.models.base import BaseModel
+from app.models.base import BaseModel, utc_now
 
 
 class Subscription(BaseModel, table=True):
@@ -17,4 +17,4 @@ class Subscription(BaseModel, table=True):
     next_due_date: date | None = None
     activated_at: datetime | None = None
     canceled_at: datetime | None = None
-    last_synced_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    last_synced_at: datetime = Field(default_factory=utc_now)

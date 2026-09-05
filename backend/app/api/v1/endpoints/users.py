@@ -21,7 +21,7 @@ async def list_users(
 ) -> list[UserRead]:
     statement = (
         select(User)
-        .where(User.tenant_id == tenant_id, User.is_deleted.is_(False))
+        .where(User.tenant_id == tenant_id, User.is_deleted == False)
         .offset(offset)
         .limit(limit)
     )

@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -29,7 +30,16 @@ class SubscriptionRead(BaseModel):
 
 
 class AsaasWebhookPayload(BaseModel):
+    """
+    Payload enviado pelo Asaas no webhook.
+
+    O Asaas pode adicionar campos extras; usamos model_config extra='allow'
+    para não rejeitar payloads com campos desconhecidos.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
     event: str
     id: str | None = None
-    payment: dict | None = None
-    subscription: dict | None = None
+    payment: dict[str, Any] | None = None
+    subscription: dict[str, Any] | None = None

@@ -12,11 +12,23 @@ from app.models.organization import Organization
 from app.models.subscription import Subscription
 from app.models.user import User
 
+# Mapeamento de status de pagamento para status de subscription
+_PAYMENT_TO_SUBSCRIPTION_STATUS: dict[str, str] = {
+    "RECEIVED": "ACTIVE",
+    "CONFIRMED": "ACTIVE",
+    "PAYMENT_RECEIVED": "ACTIVE",
+    "PAYMENT_CONFIRMED": "ACTIVE",
+    "OVERDUE": "OVERDUE",
+    "REFUNDED": "REFUNDED",
+    "CANCELED": "CANCELED",
+    "INACTIVE": "INACTIVE",
+}
+
 
 class AsaasService:
     def __init__(self) -> None:
-        env_host = "api" if settings.ASAAS_ENVIRONMENT == "production" else "sandbox"
-        self.base_url = f"https://{env_host}.asaas.com/v3"
+        env_host = "sandbox" if settings.ASAAS_ENVIRONMENT == "sandbox" else "api"
+        self.base_url = f"https://{env_host}.asaas.com/api/v3"
         self.headers = {"access_token": settings.ASAAS_API_KEY, "Content-Type": "application/json"}
 
     async def _request(self, method: str, path: str, payload: dict | None = None) -> dict:
@@ -35,7 +47,7 @@ class AsaasService:
             await session.exec(
                 select(AsaasCustomer).where(
                     AsaasCustomer.organization_id == organization.id,
-                    AsaasCustomer.is_deleted.is_(False),
+                    AsaasCustomer.is_deleted == False,
                 )
             )
         ).first()
@@ -80,38 +92,109 @@ class AsaasService:
         }
 
     async def create_customer_portal(self, customer_id: str) -> str:
-        portal_data = await self._request("POST", "/customerPortal/session", {"customer": customer_id})
-        return portal_data["url"]
+        """
+        Retorna a URL do portal de autoatendimento do cliente no Asaas.
+        O endpoint correto é GET /customers/{id}/portalUrl (sandbox e produção).
+        """
+        data = await self._request("GET", f"/customers/{customer_id}/portalUrl")
+        # O Asaas retorna {"portalUrl": "https://..."}
+        url = data.get("portalUrl") or data.get("url") or data.get("portal_url")
+        if not url:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Portal URL not found in Asaas response: {data}",
+            )
+        return url
 
     @staticmethod
     def parse_due_date(value: str | None) -> date | None:
         if not value:
             return None
-        return datetime.fromisoformat(value).date()
+        try:
+            return datetime.fromisoformat(value).date()
+        except (ValueError, TypeError):
+            return None
+
+    def _resolve_external_reference(self, raw_payload: dict) -> str | None:
+        """
+        Extrai o externalReference de qualquer tipo de evento Asaas.
+
+        O campo pode estar em:
+        - payload["subscription"]["externalReference"]  → eventos de assinatura
+        - payload["payment"]["externalReference"]       → eventos de pagamento avulso
+        - payload["externalReference"]                  → raramente na raiz
+        """
+        # 1. Tenta em subscription
+        subscription_block = raw_payload.get("subscription") or {}
+        ref = subscription_block.get("externalReference")
+        if ref:
+            return ref
+
+        # 2. Tenta em payment
+        payment_block = raw_payload.get("payment") or {}
+        ref = payment_block.get("externalReference")
+        if ref:
+            return ref
+
+        # 3. Tenta na raiz
+        return raw_payload.get("externalReference")
 
     async def sync_subscription_from_webhook(self, session: AsyncSession, payload: dict) -> Subscription | None:
-        subscription_payload = payload.get("subscription") or {}
-        external_reference = subscription_payload.get("externalReference")
+        """
+        Sincroniza a subscription local com os dados do webhook.
+        Suporta eventos de subscription e de payment (ex: PAYMENT_RECEIVED).
+        """
+        external_reference = self._resolve_external_reference(payload)
         if not external_reference:
             return None
 
-        org_id = UUID(external_reference)
+        try:
+            org_id = UUID(external_reference)
+        except (ValueError, AttributeError):
+            return None
+
         subscription = (
             await session.exec(
                 select(Subscription).where(
                     Subscription.organization_id == org_id,
-                    Subscription.is_deleted.is_(False),
+                    Subscription.is_deleted == False,
                 )
             )
         ).first()
         if not subscription:
             return None
 
-        subscription.asaas_subscription_id = subscription_payload.get("id", subscription.asaas_subscription_id)
-        subscription.status = subscription_payload.get("status", subscription.status)
-        subscription.next_due_date = self.parse_due_date(subscription_payload.get("nextDueDate"))
+        event_type: str = payload.get("event", "")
+        subscription_block = payload.get("subscription") or {}
+        payment_block = payload.get("payment") or {}
+
+        # Atualiza ID e data a partir do bloco de subscription, se disponível
+        if subscription_block.get("id"):
+            subscription.asaas_subscription_id = subscription_block["id"]
+        if subscription_block.get("nextDueDate"):
+            subscription.next_due_date = self.parse_due_date(subscription_block["nextDueDate"])
+
+        # Determina novo status
+        new_status: str | None = None
+
+        # Prioridade 1: status explícito na subscription
+        if subscription_block.get("status"):
+            new_status = subscription_block["status"]
+        # Prioridade 2: deduz pelo tipo de evento
+        elif event_type in _PAYMENT_TO_SUBSCRIPTION_STATUS:
+            new_status = _PAYMENT_TO_SUBSCRIPTION_STATUS[event_type]
+        # Prioridade 3: status no bloco de pagamento (fallback)
+        elif payment_block.get("status"):
+            raw_pay_status = payment_block["status"]
+            new_status = _PAYMENT_TO_SUBSCRIPTION_STATUS.get(raw_pay_status, raw_pay_status)
+
+        if new_status:
+            subscription.status = new_status
+
         subscription.last_synced_at = datetime.now(UTC)
-        if subscription.status in {"ACTIVE", "RECEIVED"} and not subscription.activated_at:
+
+        # Marca data de ativação / cancelamento
+        if subscription.status in {"ACTIVE", "RECEIVED", "CONFIRMED"} and not subscription.activated_at:
             subscription.activated_at = datetime.now(UTC)
         if subscription.status in {"CANCELED", "INACTIVE"}:
             subscription.canceled_at = datetime.now(UTC)

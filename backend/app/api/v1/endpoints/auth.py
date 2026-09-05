@@ -10,6 +10,7 @@ from app.background.tasks import send_transactional_email_task
 from app.core.database import get_session
 from app.core.limiter import limiter
 from app.core.security import create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password
+from app.models.base import utc_now
 from app.models.organization import Organization
 from app.models.user import User
 from app.schemas.auth import (
@@ -35,7 +36,7 @@ async def login(request: Request, payload: LoginRequest, session: AsyncSession =
     if blocked and blocked[0] >= 5 and blocked[1] > datetime.now(UTC):
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many failed attempts")
 
-    user = (await session.exec(select(User).where(User.email == payload.email, User.is_deleted.is_(False)))).first()
+    user = (await session.exec(select(User).where(User.email == payload.email, User.is_deleted == False))).first()
     if not user or not verify_password(payload.password, user.hashed_password):
         count = (blocked[0] + 1) if blocked else 1
         FAILED_LOGINS[payload.email] = (count, datetime.now(UTC) + timedelta(minutes=15))
@@ -46,7 +47,7 @@ async def login(request: Request, payload: LoginRequest, session: AsyncSession =
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User inactive")
 
-    user.last_login_at = datetime.now(UTC)
+    user.last_login_at = utc_now()
     session.add(user)
     await session.commit()
 
@@ -149,7 +150,7 @@ async def reset_password(request: Request, payload: ResetPasswordRequest, sessio
     user = (await session.exec(select(User).where(User.email == payload.email))).first()
     if user and user.is_active and not user.is_deleted:
         user.reset_password_token = token_urlsafe(32)
-        user.reset_password_expires_at = datetime.now(UTC) + timedelta(hours=1)
+        user.reset_password_expires_at = utc_now() + timedelta(hours=1)
         session.add(user)
         await session.commit()
         send_transactional_email_task.delay(  # pyright: ignore[reportFunctionMemberAccess]
@@ -176,7 +177,7 @@ async def confirm_reset_password(
     session: AsyncSession = Depends(get_session),
 ) -> MessageResponse:
     user = (await session.exec(select(User).where(User.reset_password_token == payload.token))).first()
-    if not user or not user.reset_password_expires_at or user.reset_password_expires_at < datetime.now(UTC):
+    if not user or not user.reset_password_expires_at or user.reset_password_expires_at < utc_now():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token")
 
     user.hashed_password = get_password_hash(payload.new_password)

@@ -7,7 +7,10 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+if settings.TESTING:
+    pwd_context = CryptContext(schemes=["plaintext"], deprecated="auto")
+else:
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=4)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 

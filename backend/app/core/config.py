@@ -2,8 +2,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_ignore_empty=True, extra="ignore"
+    )
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/saas_db"
+    REDIS_PASSWORD: str = "dev-redis-password"
     REDIS_URL: str = "redis://localhost:6379/0"
     JWT_SECRET_KEY: str = "dev-secret-key"
     JWT_ALGORITHM: str = "HS256"
@@ -24,18 +27,24 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = True
     SENTRY_DSN: str = ""
-    
     # OpenRouter API Key para integração com múltiplos modelos de IA
     OPENROUTER_API_KEY: str = ""
-    
+
     # Configurações de IA e Agentes
     AI_DEFAULT_MODEL: str = "openai/gpt-4o-mini"
     AI_MAX_CONTEXT_MESSAGES: int = 50
     AI_SESSION_EXPIRE_HOURS: int = 24
-    
+
     # Text2SQL configurações
     TEXT2SQL_READ_ONLY: bool = True
     TEXT2SQL_MAX_RESULTS: int = 100
+
+    TESTING: bool = False
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self.REDIS_PASSWORD and not self.REDIS_URL.startswith("redis://:"):
+            self.REDIS_URL = f"redis://:{self.REDIS_PASSWORD}@localhost:6379/0"
 
 
 settings = Settings()

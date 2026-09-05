@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import JSON, Column
 from sqlmodel import Field
 
-from app.models.base import BaseModel
+from app.models.base import BaseModel, utc_now
 
 
 class EmailDelivery(BaseModel, table=True):
@@ -16,4 +16,4 @@ class EmailDelivery(BaseModel, table=True):
     attempts: int = 0
     last_error: str | None = None
     sent_at: datetime | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=utc_now)
