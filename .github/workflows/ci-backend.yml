@@ -27,8 +27,19 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7-alpine
+        command: redis-server --requirepass dev-redis-password-123456
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli -a dev-redis-password-123456 ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
     env:
       DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/saas_db
+      REDIS_URL: redis://:dev-redis-password-123456@localhost:6379/0
     defaults:
       run:
         working-directory: backend

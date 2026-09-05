@@ -258,7 +258,10 @@ async def test_e2e_full_user_journey(client):
         json={"plan_id": "growth"},
         headers=auth_headers,
     )
-    assert checkout_response.status_code in {200, 502}, checkout_response.text
+    expected = {200, 502}
+    if not settings.ASAAS_API_KEY:
+        expected.add(503)
+    assert checkout_response.status_code in expected, checkout_response.text
 
     portal_response = await client.post(
         "/api/v1/billing/portal",
