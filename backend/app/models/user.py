@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
+from sqlalchemy import DateTime
 from sqlmodel import Field
 
 from app.models.base import BaseModel
@@ -15,7 +16,11 @@ class User(BaseModel, table=True):
     is_active: bool = True
     email_verified: bool = False
     reset_password_token: str | None = None
-    reset_password_expires_at: datetime | None = None
+    reset_password_expires_at: datetime | None = Field(
+        default=None, sa_type=DateTime(timezone=True)
+    )
     email_verification_token: str | None = None
     refresh_token_version: int = 0
-    last_login_at: datetime | None = None
+    last_login_at: datetime | None = Field(
+        default=None, sa_type=DateTime(timezone=True)
+    )

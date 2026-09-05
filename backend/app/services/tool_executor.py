@@ -9,7 +9,7 @@ from typing import Any, Optional
 from uuid import UUID
 from datetime import datetime
 
-from app.core.database import AsyncSessionLocal
+from app.core.database import SessionLocal
 from app.core.config import settings
 from sqlmodel import select
 from sqlalchemy import text
@@ -69,7 +69,7 @@ class ToolExecutor:
         # Isso deve ser feito com cuidado para não quebrar queries complexas
         
         try:
-            async with AsyncSessionLocal() as session:
+            async with SessionLocal() as session:
                 result = await session.execute(text(sql_query), params or {})
                 rows = result.fetchall()
                 columns = list(result.keys()) if result.keys() else []
@@ -87,7 +87,7 @@ class ToolExecutor:
         """Obtém perfil de usuário da organização"""
         from app.models.user import User
         
-        async with AsyncSessionLocal() as session:
+        async with SessionLocal() as session:
             result = await session.execute(
                 select(User).where(User.id == user_id, User.tenant_id == self.tenant_id)
             )
@@ -107,7 +107,7 @@ class ToolExecutor:
         """Lista membros da organização"""
         from app.models.user import User
         
-        async with AsyncSessionLocal() as session:
+        async with SessionLocal() as session:
             result = await session.execute(
                 select(User)
                 .where(User.tenant_id == self.tenant_id)
@@ -133,7 +133,7 @@ class ToolExecutor:
         from app.models.asaas_webhook_event import AsaasWebhookEvent
         from datetime import timedelta
         
-        async with AsyncSessionLocal() as session:
+        async with SessionLocal() as session:
             cutoff = datetime.utcnow() - timedelta(days=days)
             result = await session.execute(
                 select(AsaasWebhookEvent)
@@ -393,7 +393,7 @@ class ToolExecutor:
         
         # Obter schema real do banco
         try:
-            async with AsyncSessionLocal() as session:
+            async with SessionLocal() as session:
                 # Query para obter colunas
                 result = await session.execute(
                     text("""

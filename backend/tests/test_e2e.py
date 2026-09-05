@@ -1,5 +1,6 @@
 import pytest
 
+from app.core.config import settings
 from app.core.security import decode_token
 
 
@@ -66,7 +67,9 @@ async def test_e2e_register_login_refresh_me(client):
         "password": "securepass123",
         "organization_name": "E2E Org",
     }
-    register_response = await client.post("/api/v1/auth/register", json=register_payload)
+    register_response = await client.post(
+        "/api/v1/auth/register", json=register_payload
+    )
     assert register_response.status_code == 200
     register_data = register_response.json()
     assert "access_token" in register_data
@@ -75,7 +78,10 @@ async def test_e2e_register_login_refresh_me(client):
 
     login_response = await client.post(
         "/api/v1/auth/login",
-        json={"email": register_payload["email"], "password": register_payload["password"]},
+        json={
+            "email": register_payload["email"],
+            "password": register_payload["password"],
+        },
     )
     assert login_response.status_code == 200
     login_data = login_response.json()
@@ -108,7 +114,9 @@ async def test_e2e_organization_create_and_list(client):
         "password": "orgpass123",
         "organization_name": "Org E2E",
     }
-    register_response = await client.post("/api/v1/auth/register", json=register_payload)
+    register_response = await client.post(
+        "/api/v1/auth/register", json=register_payload
+    )
     assert register_response.status_code == 200
     access_token = register_response.json()["access_token"]
     auth_headers = {"Authorization": f"Bearer {access_token}"}
@@ -140,7 +148,9 @@ async def test_e2e_authenticated_billing_checkout(client):
         "password": "billpass123",
         "organization_name": "Billing E2E",
     }
-    register_response = await client.post("/api/v1/auth/register", json=register_payload)
+    register_response = await client.post(
+        "/api/v1/auth/register", json=register_payload
+    )
     assert register_response.status_code == 200
     access_token = register_response.json()["access_token"]
     auth_headers = _auth_headers_with_tenant(access_token)
@@ -150,7 +160,10 @@ async def test_e2e_authenticated_billing_checkout(client):
         json={"plan_id": "starter"},
         headers=auth_headers,
     )
-    assert checkout_response.status_code in {200, 502}, checkout_response.text
+    expected = {200, 502}
+    if not settings.ASAAS_API_KEY:
+        expected.add(503)
+    assert checkout_response.status_code in expected, checkout_response.text
 
 
 @pytest.mark.asyncio
@@ -160,7 +173,9 @@ async def test_e2e_authenticated_billing_subscription(client):
         "password": "subpass123",
         "organization_name": "Sub E2E",
     }
-    register_response = await client.post("/api/v1/auth/register", json=register_payload)
+    register_response = await client.post(
+        "/api/v1/auth/register", json=register_payload
+    )
     assert register_response.status_code == 200
     access_token = register_response.json()["access_token"]
     auth_headers = _auth_headers_with_tenant(access_token)
@@ -198,8 +213,12 @@ async def test_e2e_organization_isolation_between_users(client):
         headers={"Authorization": f"Bearer {token1}"},
     )
 
-    orgs1 = await client.get("/api/v1/organizations/", headers={"Authorization": f"Bearer {token1}"})
-    orgs2 = await client.get("/api/v1/organizations/", headers={"Authorization": f"Bearer {token2}"})
+    orgs1 = await client.get(
+        "/api/v1/organizations/", headers={"Authorization": f"Bearer {token1}"}
+    )
+    orgs2 = await client.get(
+        "/api/v1/organizations/", headers={"Authorization": f"Bearer {token2}"}
+    )
 
     names1 = {org["name"] for org in orgs1.json()}
     names2 = {org["name"] for org in orgs2.json()}
@@ -215,7 +234,9 @@ async def test_e2e_full_user_journey(client):
         "password": "journeypass123",
         "organization_name": "Journey Org",
     }
-    register_response = await client.post("/api/v1/auth/register", json=register_payload)
+    register_response = await client.post(
+        "/api/v1/auth/register", json=register_payload
+    )
     assert register_response.status_code == 200
     token = register_response.json()["access_token"]
     auth_headers = _auth_headers_with_tenant(token)

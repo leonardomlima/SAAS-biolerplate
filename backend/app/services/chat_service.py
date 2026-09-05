@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import AsyncSessionLocal
+from app.core.database import SessionLocal
 from app.core.redis import get_redis_client
 from app.models.agent import Agent, ChatSession, Message, AgentType
 from app.schemas.agent import ChatMessageRequest, ChatMessageResponse
@@ -98,7 +98,7 @@ class ChatService:
     
     async def create_session(self, agent_id: UUID, title: Optional[str] = None) -> ChatSession:
         """Cria nova sessão de chat"""
-        async with AsyncSessionLocal() as session:
+        async with SessionLocal() as session:
             # Verificar se agente existe e pertence ao tenant
             result = await session.execute(
                 select(Agent).where(
@@ -135,7 +135,7 @@ class ChatService:
     
     async def get_session(self, session_id: UUID) -> Optional[ChatSession]:
         """Recupera sessão de chat com mensagens"""
-        async with AsyncSessionLocal() as session:
+        async with SessionLocal() as session:
             result = await session.execute(
                 select(ChatSession)
                 .where(
@@ -166,7 +166,7 @@ class ChatService:
         offset: int = 0
     ) -> List[ChatSession]:
         """Lista sessões de chat do usuário"""
-        async with AsyncSessionLocal() as session:
+        async with SessionLocal() as session:
             query = select(ChatSession).where(
                 ChatSession.tenant_id == self.tenant_id,
                 ChatSession.user_id == self.user_id,
@@ -200,7 +200,7 @@ class ChatService:
         5. Salvar resposta do assistente
         6. Atualizar contexto no Redis
         """
-        async with AsyncSessionLocal() as db_session:
+        async with SessionLocal() as db_session:
             # Usar sessão existente ou criar nova
             if not session:
                 session = await self.create_session(agent_id=agent.id, title=None)
@@ -385,7 +385,7 @@ class ChatService:
     
     async def delete_session(self, session_id: UUID) -> bool:
         """Deleta sessão de chat (soft delete)"""
-        async with AsyncSessionLocal() as session:
+        async with SessionLocal() as session:
             result = await session.execute(
                 select(ChatSession).where(
                     ChatSession.id == session_id,
@@ -416,7 +416,7 @@ class ChatService:
     
     async def clear_session_history(self, session_id: UUID, keep_last: int = 0) -> bool:
         """Limpa histórico de mensagens de uma sessão"""
-        async with AsyncSessionLocal() as session:
+        async with SessionLocal() as session:
             if keep_last == 0:
                 # Deletar todas as mensagens
                 result = await session.execute(
